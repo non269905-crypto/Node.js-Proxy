@@ -1,30 +1,29 @@
-import express from "express";
-import cors from "cors";
-import fetch from "node-fetch";
+const express = require("express");
+const axios = require("axios");
+const cors = require("cors");
 
 const app = express();
 app.use(cors());
 
-const BINANCE = "https://api.binance.com";
-
-app.get("/klines", async (req, res) => {
+app.get("/api/binance/*", async (req, res) => {
     try {
-        const { symbol, interval, limit } = req.query;
+        const path = req.params[0];
+        const url = `https://api.binance.com/${path}`;
+        
+        const r = await axios.get(url, {
+            params: req.query,
+            timeout: 8000
+        });
 
-        const url = `${BINANCE}/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
-
-        const r = await fetch(url);
-        const data = await r.json();
-
-        return res.json(data);
+        res.json(r.data);
     } catch (err) {
-        console.error(err);
-        return res.status(500).json({ error: "Proxy error", details: err.toString() });
+        res.status(500).json({ error: err.toString() });
     }
 });
 
-// سلامت
-app.get("/", (req, res) => res.json({ status: "proxy ok" }));
+app.get("/", (req, res) => {
+    res.send("Binance Proxy Running ✔");
+});
 
-const port = process.env.PORT || 8080;
-app.listen(port, () => console.log("Binance Proxy Running on PORT", port));
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => console.log("Proxy Running on", PORT));
